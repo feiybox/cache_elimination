@@ -2,25 +2,32 @@ package cache_elimination
 
 import "container/list"
 
-const CacheFIFO = "fifo"
+const CacheLRU = "lru"
 
-// 先进先出算法
-type Fifo struct {
+type LRU struct {
 	ll *list.List // 链表最后的节点为最新使用的节点
 	m  map[string]*list.Element
 
 	*BaseCache
 }
 
-func newFifoCache(cache *BaseCache) *Fifo {
-	return &Fifo{
+func newLRUCache(cache *BaseCache) *LRU {
+	return &LRU{
 		ll:        list.New(),
 		m:         make(map[string]*list.Element, cache.Capacity),
 		BaseCache: cache,
 	}
 }
 
-func (c *Fifo) Set(key string, value interface{}) {
+func (c *LRU) Get(key string) interface{} {
+	if e, ok := c.m[key]; ok {
+		c.ll.MoveToBack(e)
+		return e.Value.(*KeyValue).Value
+	}
+	return nil
+}
+
+func (c *LRU) Set(key string, value interface{}) {
 	// 已缓存
 	if e, ok := c.m[key]; ok {
 		c.ll.MoveToBack(e)
@@ -43,22 +50,14 @@ func (c *Fifo) Set(key string, value interface{}) {
 	}
 }
 
-func (c *Fifo) Get(key string) interface{} {
-	e, ok := c.m[key]
-	if ok {
-		return e.Value.(*KeyValue).Value
-	}
-	return nil
-}
-
-func (c *Fifo) Del(key string) {
+func (c *LRU) Del(key string) {
 	e, ok := c.m[key]
 	if ok {
 		c.ll.Remove(e)
-		delete(c.m, key)
+		delete(c.m, e.Value.(*KeyValue).Key)
 	}
 }
 
-func (c *Fifo) Len() int {
+func (c *LRU) Len() int {
 	return c.ll.Len()
 }
