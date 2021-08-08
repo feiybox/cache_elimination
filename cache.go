@@ -34,6 +34,8 @@ func NewCache(cacheType string, capacity int) Cache {
 		return newSimpleCache(baseCache)
 	case CacheFIFO:
 		return newFifoCache(baseCache)
+	case CacheLRU:
+		return newLRUCache(baseCache)
 	}
 	return newSimpleCache(baseCache)
 }
